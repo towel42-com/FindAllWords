@@ -29,87 +29,38 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
-#include <memory>
-#include "Timer.h"
 
-struct SCharNode
-{
-    char fChar{ 0 };
-    bool fIsWord{ false };
-    std::vector<std::unique_ptr< SCharNode > > fChildren;
-
-    void addWord(const std::string& str, std::size_t pos = 0)
-    {
-        auto curr = str[pos] - 'a';
-        if (curr >= fChildren.size())
-        {
-            fChildren.resize(curr + 1);
-        }
-
-        if (!fChildren[curr])
-        {
-            fChildren[curr].reset(new SCharNode);
-            fChildren[curr]->fChar = str[pos];
-        }
-
-        bool atEnd = pos == (str.length() - 1);
-        if (atEnd)
-            fChildren[curr]->fIsWord = atEnd;
-        else
-            fChildren[curr]->addWord(str, pos + 1);
-    }
-
-    bool isWord(const std::string& str, bool wholeWordOnly = true, std::size_t pos = 0)
-    {
-        auto curr = str[pos] - 'a';
-        if (curr >= fChildren.size())
-            return false;
-        if (!fChildren[curr])
-            return false;
-
-        bool atEnd = pos == (str.length() - 1);
-        if (atEnd)
-        {
-            if (wholeWordOnly)
-                return fChildren[curr]->fIsWord;
-            return true;
-        }
-        return fChildren[curr]->isWord(str, wholeWordOnly, pos + 1);
-    }
-
-    bool isWordStart(const std::string& str)
-    {
-        return isWord(str, false, 0);
-    }
-};
+#include "timer.h"
 
 void showHelp()
 {
     std::cout << "Usage FindAlLWords --dict <dictionary> --scramble <letters>" << std::endl;
 }
 
-void permuteFast(const std::string& str, const std::string& l, const std::function< bool(const std::string& word) >& isStartOfWord, const std::function< bool(const std::string& word) >& isWord)
+void permuteFast(const std::string& s, const std::string& l, const std::function< bool(const std::string& word) >& isWordStart, const std::function< bool(const std::string& word) >& isWord)
 {
-    if (str.length() < 1)
+    if (s.length() < 1)
     {
-        if (isWord(l))
-            std::cout << l << std::endl;
+        auto newWord = l + s;
+        if (isWord(newWord))
+            std::cout << newWord << std::endl;
     }
     std::unordered_set<char> uset;
-    for (size_t ii = 0; ii < str.length(); ii++)
+    for (size_t ii = 0; ii < s.length(); ii++)
     {
-        if (uset.find(str[ii]) != uset.end())
+        if (uset.find(s[ii]) != uset.end())
             continue;
         else
-            uset.insert(str[ii]);
+            uset.insert(s[ii]);
         std::string temp = "";
-        if (ii < str.length() - 1)
-            temp = str.substr(0, ii) + str.substr(ii + 1);
+        if (ii < s.length() - 1)
+            temp = s.substr(0, ii) + s.substr(ii + 1);
         else
-            temp = str.substr(0, ii);
-        auto next = l + str[ii];
-        if (isStartOfWord(next))
-            permuteFast(temp, next, isStartOfWord, isWord);
+            temp = s.substr(0, ii);
+        auto nextWordStart = l + s[ii];
+
+        if ( isWordStart( nextWordStart ) )
+            permuteFast(temp, nextWordStart, isWordStart, isWord);
     }
 }
 
@@ -131,6 +82,9 @@ static inline void rtrim(std::string& s) {
 // trim from both ends (in place)
 static inline void cleanup(std::string& str)
 {
+    //rtrim(str);
+    //ltrim(str);
+    //std::transform(str.begin(), str.end(), str.begin(), [](unsigned char ch) { return std::tolower(ch); });
     for (auto ii = str.begin(); ii != str.end(); )
     {
         *ii = std::tolower(*ii);
@@ -169,6 +123,7 @@ int main(int argc, char** argv)
             }
             std::string currScramble = argv[++ii];
             std::transform(currScramble.begin(), currScramble.end(), currScramble.begin(), [](unsigned char ch) { return std::tolower(ch); });
+            //std::sort(currScramble.begin(), currScramble.end());
             scrambles.push_back(currScramble);
         }
     }
@@ -186,26 +141,42 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    SCharNode dictionary;
-
-    //std::unordered_map< std::string, bool > dictionary;
+    std::unordered_map< std::string, bool > dictionary;
 
     for (std::string currLine; std::getline(ifs, currLine); )
     {
         cleanup(currLine);
-        dictionary.addWord(currLine);
+
+        for (size_t ii = 0; ii < currLine.length(); ++ii)
+        {
+            bool isEnd = ii == (currLine.length() - 1);
+            auto currSub = currLine.substr(0, ii + 1);
+            auto pos = dictionary.find(currSub);
+            if (pos == dictionary.end())
+            {
+                dictionary[currSub] = isEnd;
+            }
+            else if (isEnd && !(*pos).second)
+            {
+                (*pos).second = true;
+            }
+        }
     }
 
     auto isWordFunc =
-        [&dictionary](const std::string& word)
+        [dictionary](const std::string& word)
     {
-        return dictionary.isWord(word);
+        auto pos = dictionary.find(word);
+        if (pos == dictionary.end())
+            return false;
+        return (*pos).second;
     };
 
     auto isWordStartFunc =
-        [&dictionary](const std::string& word)
+        [dictionary](const std::string& word)
     {
-        return dictionary.isWordStart(word);
+        auto pos = dictionary.find(word);
+        return pos != dictionary.end();
     };
 
     for (auto&& scramble : scrambles)
@@ -217,6 +188,5 @@ int main(int argc, char** argv)
 
         permuteFast(scramble, "", isWordStartFunc, isWordFunc);
     }
-
     return 0;
 }
