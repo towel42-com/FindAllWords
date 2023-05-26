@@ -37,43 +37,7 @@ void showHelp()
     std::cout << "Usage FindAlLWords --dict <dictionary> --scramble <letters>" << std::endl;
 }
 
-void permute(std::string& str, size_t start, size_t end, std::unordered_set< std::string >& found, const std::function< bool(const std::string& word) >& isWord)
-{
-    if (start == end)
-    {
-        if (isWord(str))
-        {
-            if (found.find(str) == found.end())
-            {
-                std::cout << str << std::endl;
-                found.insert(str);
-            }
-        }
-    }
-    else
-    {
-        // Permutations made
-        for (auto ii = start; ii <= end; ++ii)
-        {
-            // Swapping done
-            std::swap(str[start], str[ii]);
-
-            // Recursion called
-            permute(str, start + 1, end, found, isWord);
-
-            // backtrack
-            std::swap(str[start], str[ii]);
-        }
-    }
-}
-
-void permute(std::string& str, size_t start, size_t end, const std::function< bool(const std::string& word) >& isWord)
-{
-    std::unordered_set< std::string > found;
-    return permute(str, start, end, found, isWord);
-}
-
-void permuteFast(const std::string& s, const std::string& l, const std::function< bool(const std::string& word) >& isWord)
+void permuteFast(const std::string& s, const std::string& l, const std::function< bool(const std::string& word) >& isWordStart, const std::function< bool(const std::string& word) >& isWord)
 {
     if (s.length() < 1)
     {
@@ -93,7 +57,10 @@ void permuteFast(const std::string& s, const std::string& l, const std::function
             temp = s.substr(0, ii) + s.substr(ii + 1);
         else
             temp = s.substr(0, ii);
-        permuteFast(temp, l + s[ii], isWord);
+        auto nextWordStart = l + s[ii];
+
+        if ( isWordStart( nextWordStart ) )
+            permuteFast(temp, nextWordStart, isWordStart, isWord);
     }
 }
 
@@ -219,9 +186,7 @@ int main(int argc, char** argv)
             << "Searching for words in: " << scramble << std::endl
             << "=============================================" << std::endl;
 
-        //permuteFast(scramble, "", isWordFunc);
-
-        permute(scramble, 0, scramble.size() - 1, isWordFunc);
+        permuteFast(scramble, "", isWordStartFunc, isWordFunc);
     }
     return 0;
 }
