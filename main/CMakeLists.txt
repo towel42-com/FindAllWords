@@ -25,7 +25,7 @@ project( FindAllWords )
 include( include.cmake )
 include( ${CMAKE_SOURCE_DIR}/SABUtils/Project.cmake )
 
-add_executable( FindAllWords WIN32
+add_executable( FindAllWords 
                  ${project_SRCS} 
                  ${project_H} 
                  ${_CMAKE_FILES}

@@ -31,7 +31,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/SABUtils/Modules ${CMAKE_MODULE_PATH})
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
-find_package(Deploy REQUIRED)
+find_package(DeploySystem REQUIRED)
 find_package(AddUnitTest REQUIRED)
 
 add_subdirectory( main )

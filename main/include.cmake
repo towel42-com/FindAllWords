@@ -3,5 +3,6 @@ set(project_SRCS
 )
 
 set(project_H
+timer.h
 )
 
