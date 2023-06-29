@@ -32,92 +32,15 @@
 
 #include "timer.h"
 
+
 void showHelp()
 {
     std::cout << "Usage FindAlLWords --dict <dictionary> --scramble <letters>" << std::endl;
 }
 
-void permute(std::string& str, size_t start, size_t end, std::unordered_set< std::string >& found, const std::function< bool(const std::string& word) >& isWord)
-{
-    if (start == end)
-    {
-        if (isWord(str))
-        {
-            if (found.find(str) == found.end())
-            {
-                std::cout << str << std::endl;
-                found.insert(str);
-            }
-        }
-    }
-    else
-    {
-        // Permutations made
-        for (auto ii = start; ii <= end; ++ii)
-        {
-            // Swapping done
-            std::swap(str[start], str[ii]);
-
-            // Recursion called
-            permute(str, start + 1, end, found, isWord);
-
-            // backtrack
-            std::swap(str[start], str[ii]);
-        }
-    }
-}
-
-void permute(std::string& str, size_t start, size_t end, const std::function< bool(const std::string& word) >& isWord)
-{
-    std::unordered_set< std::string > found;
-    return permute(str, start, end, found, isWord);
-}
-
-void permuteFast(const std::string& s, const std::string& l, const std::function< bool(const std::string& word) >& isWord)
-{
-    if (s.length() < 1)
-    {
-        auto newWord = l + s;
-        if (isWord(newWord))
-            std::cout << newWord << std::endl;
-    }
-    std::unordered_set<char> uset;
-    for (size_t ii = 0; ii < s.length(); ii++)
-    {
-        if (uset.find(s[ii]) != uset.end())
-            continue;
-        else
-            uset.insert(s[ii]);
-        std::string temp = "";
-        if (ii < s.length() - 1)
-            temp = s.substr(0, ii) + s.substr(ii + 1);
-        else
-            temp = s.substr(0, ii);
-        permuteFast(temp, l + s[ii], isWord);
-    }
-}
-
-
-// trim from start (in place)
-static inline void ltrim(std::string& s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string& s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }).base(), s.end());
-}
-
 // trim from both ends (in place)
 static inline void cleanup(std::string& str)
 {
-    //rtrim(str);
-    //ltrim(str);
-    //std::transform(str.begin(), str.end(), str.begin(), [](unsigned char ch) { return std::tolower(ch); });
     for (auto ii = str.begin(); ii != str.end(); )
     {
         *ii = std::tolower(*ii);
@@ -126,12 +49,18 @@ static inline void cleanup(std::string& str)
         else
             ii++;
     }
-
-
 }
 
 int main(int argc, char** argv)
 {
+    //199711L	C++98
+    //201103L	C++11
+    //201402L	C++14
+    //201703L	C++17
+    //202002L	C++20
+    //std::cout << __cplusplus << std::endl;
+
+
     CTimer timer;
 
     std::string dictionaryFile;
@@ -217,11 +146,28 @@ int main(int argc, char** argv)
         std::cout
             << "=============================================" << std::endl
             << "Searching for words in: " << scramble << std::endl
+            ;
+        std::sort(scramble.begin(), scramble.end());
+        std::cout
+            << "Starting with : " << scramble << std::endl
             << "=============================================" << std::endl;
 
-        //permuteFast(scramble, "", isWordFunc);
+        size_t numPermutations = 0;
+        do
+        {
+            if (isWordFunc(scramble))
+            {
+                std::cout << scramble << std::endl;
+            }
+        } while (std::next_permutation(scramble.begin(), scramble.end()));
 
-        permute(scramble, 0, scramble.size() - 1, isWordFunc);
+        do
+        {
+            if (isWordFunc(scramble))
+            {
+                std::cout << scramble << std::endl;
+            }
+        } while (std::next_permutation(scramble.begin(), scramble.end()));
     }
     return 0;
 }
