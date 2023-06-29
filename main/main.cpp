@@ -83,49 +83,10 @@ struct SCharNode
     }
 };
 
+
 void showHelp()
 {
     std::cout << "Usage FindAlLWords --dict <dictionary> --scramble <letters>" << std::endl;
-}
-
-void permuteFast(const std::string& str, const std::string& l, const std::function< bool(const std::string& word) >& isStartOfWord, const std::function< bool(const std::string& word) >& isWord)
-{
-    if (str.length() < 1)
-    {
-        if (isWord(l))
-            std::cout << l << std::endl;
-    }
-    std::unordered_set<char> uset;
-    for (size_t ii = 0; ii < str.length(); ii++)
-    {
-        if (uset.find(str[ii]) != uset.end())
-            continue;
-        else
-            uset.insert(str[ii]);
-        std::string temp = "";
-        if (ii < str.length() - 1)
-            temp = str.substr(0, ii) + str.substr(ii + 1);
-        else
-            temp = str.substr(0, ii);
-        auto next = l + str[ii];
-        if (isStartOfWord(next))
-            permuteFast(temp, next, isStartOfWord, isWord);
-    }
-}
-
-
-// trim from start (in place)
-static inline void ltrim(std::string& s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }));
-}
-
-// trim from end (in place)
-static inline void rtrim(std::string& s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-        }).base(), s.end());
 }
 
 // trim from both ends (in place)
@@ -139,12 +100,17 @@ static inline void cleanup(std::string& str)
         else
             ii++;
     }
-
-
 }
 
 int main(int argc, char** argv)
 {
+    //199711L	C++98
+    //201103L	C++11
+    //201402L	C++14
+    //201703L	C++17
+    //202002L	C++20
+    //std::cout << __cplusplus << std::endl;
+
     CTimer timer;
 
     std::string dictionaryFile;
@@ -213,9 +179,28 @@ int main(int argc, char** argv)
         std::cout
             << "=============================================" << std::endl
             << "Searching for words in: " << scramble << std::endl
+            ;
+        std::sort(scramble.begin(), scramble.end());
+        std::cout
+            << "Starting with : " << scramble << std::endl
             << "=============================================" << std::endl;
 
-        permuteFast(scramble, "", isWordStartFunc, isWordFunc);
+        size_t numPermutations = 0;
+        do
+        {
+            if (isWordFunc(scramble))
+            {
+                std::cout << scramble << std::endl;
+            }
+        } while (std::next_permutation(scramble.begin(), scramble.end()));
+
+        do
+        {
+            if (isWordFunc(scramble))
+            {
+                std::cout << scramble << std::endl;
+            }
+        } while (std::next_permutation(scramble.begin(), scramble.end()));
     }
 
     return 0;
